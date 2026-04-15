@@ -63,6 +63,6 @@ weather-app/
 1. سجّل على [openweathermap.org](https://openweathermap.org) مجاناً
 2. في `docker-compose.yml` غيّر:
    ```yaml
-   WEATHER_API_KEY=demo
+   WEATHER_API_KEY=your_real_key
    ```
    إلى مفتاحك الحقيقي.
