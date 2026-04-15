@@ -31,7 +31,7 @@ services:
       - "5000:5000"
     environment:
       - REDIS_HOST=redis
-      - WEATHER_API_KEY=demo     # غيّرها لـ API key حقيقي من openweathermap.org
+      - WEATHER_API_KEY=8353cc28424f5eddc3c538e02ef206bc     # غيّرها لـ API key حقيقي من openweathermap.org
     depends_on:
       redis:
         condition: service_healthy
