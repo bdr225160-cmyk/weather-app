@@ -1,0 +1,56 @@
+version: '3.8'
+
+# ==========================================
+# مشروع Weather App - Docker Compose
+# 3 Containers: Redis + Backend + Frontend
+# ==========================================
+
+services:
+
+  # ---- Container 1: Redis (قاعدة بيانات الكاش) ----
+  redis:
+    image: redis:7-alpine
+    container_name: weather-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    networks:
+      - weather-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ---- Container 2: Python Flask (الخادم الخلفي) ----
+  backend:
+    build: ./backend
+    container_name: weather-backend
+    restart: unless-stopped
+    ports:
+      - "5000:5000"
+    environment:
+      - REDIS_HOST=redis
+      - WEATHER_API_KEY=demo     # غيّرها لـ API key حقيقي من openweathermap.org
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+      - weather-network
+
+  # ---- Container 3: Nginx (الواجهة الأمامية) ----
+  frontend:
+    build: ./frontend
+    container_name: weather-frontend
+    restart: unless-stopped
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+    networks:
+      - weather-network
+
+# شبكة داخلية تربط الـ containers ببعض
+networks:
+  weather-network:
+    driver: bridge

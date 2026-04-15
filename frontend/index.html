@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>تطبيق الطقس 🌤️</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, sans-serif;
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      padding: 1rem;
+    }
+
+    .app-title {
+      font-size: 2rem;
+      font-weight: bold;
+      margin-bottom: 0.5rem;
+      text-align: center;
+    }
+
+    .tech-badges {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 2rem;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .badge {
+      background: rgba(255,255,255,0.15);
+      border: 1px solid rgba(255,255,255,0.3);
+      padding: 0.3rem 0.8rem;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      backdrop-filter: blur(5px);
+    }
+
+    .search-box {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1.5rem;
+      width: 100%;
+      max-width: 480px;
+    }
+
+    input {
+      flex: 1;
+      padding: 0.85rem 1.2rem;
+      border: 2px solid rgba(255,255,255,0.2);
+      border-radius: 12px;
+      background: rgba(255,255,255,0.1);
+      color: white;
+      font-size: 1rem;
+      outline: none;
+      backdrop-filter: blur(10px);
+      text-align: right;
+    }
+
+    input::placeholder { color: rgba(255,255,255,0.5); }
+    input:focus { border-color: #4fc3f7; }
+
+    button {
+      padding: 0.85rem 1.5rem;
+      background: linear-gradient(135deg, #4fc3f7, #0288d1);
+      border: none;
+      border-radius: 12px;
+      color: white;
+      font-size: 1rem;
+      font-weight: bold;
+      cursor: pointer;
+      transition: transform 0.2s, opacity 0.2s;
+    }
+
+    button:hover { transform: scale(1.03); opacity: 0.9; }
+    button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .cities-row {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin-bottom: 2rem;
+      max-width: 480px;
+    }
+
+    .city-chip {
+      background: rgba(255,255,255,0.1);
+      border: 1px solid rgba(255,255,255,0.2);
+      padding: 0.4rem 1rem;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .city-chip:hover { background: rgba(79,195,247,0.3); border-color: #4fc3f7; }
+
+    .weather-card {
+      background: rgba(255,255,255,0.1);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 20px;
+      padding: 2rem;
+      width: 100%;
+      max-width: 480px;
+      text-align: center;
+      display: none;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    }
+
+    .city-name { font-size: 1.8rem; font-weight: bold; margin-bottom: 0.5rem; }
+    .weather-icon { font-size: 4rem; margin: 1rem 0; }
+    .temperature { font-size: 3.5rem; font-weight: bold; color: #4fc3f7; }
+    .description { font-size: 1.1rem; color: rgba(255,255,255,0.8); margin: 0.5rem 0 1.5rem; }
+
+    .details-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 1rem;
+      margin-top: 1rem;
+    }
+
+    .detail-item {
+      background: rgba(255,255,255,0.08);
+      border-radius: 12px;
+      padding: 0.8rem;
+    }
+
+    .detail-label { font-size: 0.75rem; color: rgba(255,255,255,0.6); margin-bottom: 0.3rem; }
+    .detail-value { font-size: 1.1rem; font-weight: bold; }
+
+    .cache-badge {
+      display: inline-block;
+      margin-top: 1rem;
+      padding: 0.3rem 0.8rem;
+      border-radius: 20px;
+      font-size: 0.75rem;
+    }
+
+    .from-cache { background: rgba(76,175,80,0.3); border: 1px solid #4caf50; }
+    .fresh-data { background: rgba(79,195,247,0.3); border: 1px solid #4fc3f7; }
+
+    .error-msg {
+      background: rgba(244,67,54,0.2);
+      border: 1px solid #f44336;
+      border-radius: 12px;
+      padding: 1rem 2rem;
+      max-width: 480px;
+      text-align: center;
+      display: none;
+    }
+
+    .loading { display: none; text-align: center; font-size: 1rem; color: rgba(255,255,255,0.7); }
+  </style>
+</head>
+<body>
+
+  <h1 class="app-title">🌤️ تطبيق الطقس</h1>
+
+  <div class="tech-badges">
+    <span class="badge">🐍 Python Flask</span>
+    <span class="badge">🔴 Redis Cache</span>
+    <span class="badge">🌐 Nginx</span>
+    <span class="badge">🐳 Docker</span>
+    <span class="badge">☸️ Kubernetes</span>
+  </div>
+
+  <div class="search-box">
+    <input id="cityInput" type="text" placeholder="اكتب اسم المدينة بالإنجليزي..." />
+    <button id="searchBtn" onclick="searchWeather()">بحث</button>
+  </div>
+
+  <div class="cities-row" id="citiesRow"></div>
+
+  <div class="loading" id="loading">⏳ جاري البحث...</div>
+  <div class="error-msg" id="errorMsg"></div>
+
+  <div class="weather-card" id="weatherCard">
+    <div class="city-name" id="cityName"></div>
+    <div class="weather-icon" id="weatherIcon"></div>
+    <div class="temperature" id="temperature"></div>
+    <div class="description" id="description"></div>
+    <div class="details-grid">
+      <div class="detail-item">
+        <div class="detail-label">الإحساس بـ</div>
+        <div class="detail-value" id="feelsLike"></div>
+      </div>
+      <div class="detail-item">
+        <div class="detail-label">الرطوبة</div>
+        <div class="detail-value" id="humidity"></div>
+      </div>
+      <div class="detail-item">
+        <div class="detail-label">سرعة الريح</div>
+        <div class="detail-value" id="windSpeed"></div>
+      </div>
+    </div>
+    <div class="cache-badge" id="cacheBadge"></div>
+  </div>
+
+<script>
+  const API = '';
+
+  const iconMap = {
+    '01d': '☀️', '01n': '🌙', '02d': '⛅', '02n': '🌙',
+    '03d': '☁️', '03n': '☁️', '04d': '☁️', '04n': '☁️',
+    '09d': '🌧️', '09n': '🌧️', '10d': '🌦️', '10n': '🌧️',
+    '11d': '⛈️', '11n': '⛈️', '13d': '❄️', '13n': '❄️',
+    '50d': '🌫️', '50n': '🌫️'
+  };
+
+  // جيب المدن المشهورة من الخادم
+  fetch(`${API}/api/cities`)
+    .then(r => r.json())
+    .then(data => {
+      const row = document.getElementById('citiesRow');
+      data.cities.forEach(city => {
+        const chip = document.createElement('span');
+        chip.className = 'city-chip';
+        chip.textContent = city;
+        chip.onclick = () => {
+          document.getElementById('cityInput').value = city;
+          searchWeather();
+        };
+        row.appendChild(chip);
+      });
+    }).catch(() => {});
+
+  function searchWeather() {
+    const city = document.getElementById('cityInput').value.trim();
+    if (!city) return;
+
+    document.getElementById('loading').style.display = 'block';
+    document.getElementById('weatherCard').style.display = 'none';
+    document.getElementById('errorMsg').style.display = 'none';
+    document.getElementById('searchBtn').disabled = true;
+
+    fetch(`${API}/api/weather/${encodeURIComponent(city)}`)
+      .then(r => r.json())
+      .then(data => {
+        if (data.error) {
+          showError(data.error);
+          return;
+        }
+
+        document.getElementById('cityName').textContent = '📍 ' + data.city;
+        document.getElementById('weatherIcon').textContent = iconMap[data.icon] || '🌡️';
+        document.getElementById('temperature').textContent = data.temperature + '°C';
+        document.getElementById('description').textContent = data.description;
+        document.getElementById('feelsLike').textContent = data.feels_like + '°C';
+        document.getElementById('humidity').textContent = data.humidity + '%';
+        document.getElementById('windSpeed').textContent = data.wind_speed + ' م/ث';
+
+        const cacheBadge = document.getElementById('cacheBadge');
+        if (data.from_cache) {
+          cacheBadge.className = 'cache-badge from-cache';
+          cacheBadge.textContent = '✅ من الكاش (Redis)';
+        } else {
+          cacheBadge.className = 'cache-badge fresh-data';
+          cacheBadge.textContent = '🔄 بيانات جديدة من API';
+        }
+
+        if (data.note) {
+          document.getElementById('description').textContent += ' — ' + data.note;
+        }
+
+        document.getElementById('weatherCard').style.display = 'block';
+      })
+      .catch(() => showError('تعذر الاتصال بالخادم'))
+      .finally(() => {
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('searchBtn').disabled = false;
+      });
+  }
+
+  function showError(msg) {
+    const el = document.getElementById('errorMsg');
+    el.textContent = '❌ ' + msg;
+    el.style.display = 'block';
+  }
+
+  document.getElementById('cityInput').addEventListener('keypress', e => {
+    if (e.key === 'Enter') searchWeather();
+  });
+</script>
+</body>
+</html>
